@@ -1,0 +1,581 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "LeMarconnesResturauntAPI",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/Bestellingen": {
+      "post": {
+        "tags": [
+          "Bestellingen"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BestellingInputDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BestellingInputDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BestellingInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Bestellingen/Rekening/{rekeningId}": {
+      "get": {
+        "tags": [
+          "Bestellingen"
+        ],
+        "parameters": [
+          {
+            "name": "rekeningId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Menu": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Gerecht"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Gerecht"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Gerecht"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Menu"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Gerecht"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Gerecht"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Gerecht"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Gerecht"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Gerecht"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Gerecht"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Menu/{id}": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Gerecht"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Gerecht"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Gerecht"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Gerecht"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Gerecht"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Gerecht"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Menu"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Reserveringen": {
+      "get": {
+        "tags": [
+          "Reserveringen"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reserveringen"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReserveringInputDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReserveringInputDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReserveringInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reservering"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reservering"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reservering"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BestelRegel": {
+        "type": "object",
+        "properties": {
+          "bestelRegelID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aantal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aanpassing": {
+            "type": "string",
+            "nullable": true
+          },
+          "bestellingID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestelling": {
+            "$ref": "#/components/schemas/Bestelling"
+          },
+          "gerechtID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gerecht": {
+            "$ref": "#/components/schemas/Gerecht"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BestelRegelItemDto": {
+        "type": "object",
+        "properties": {
+          "gerechtID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aantal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aanpassing": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Bestelling": {
+        "type": "object",
+        "properties": {
+          "bestellingID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rekeningID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rekening": {
+            "$ref": "#/components/schemas/Rekening"
+          },
+          "bestelRegels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BestelRegel"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BestellingInputDto": {
+        "type": "object",
+        "properties": {
+          "rekeningID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BestelRegelItemDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Gerecht": {
+        "type": "object",
+        "properties": {
+          "gerechtID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "naam": {
+            "maxLength": 250,
+            "type": "string",
+            "nullable": true
+          },
+          "omschrijving": {
+            "type": "string",
+            "nullable": true
+          },
+          "prijs": {
+            "type": "number",
+            "format": "double"
+          },
+          "allergenen": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Rekening": {
+        "type": "object",
+        "properties": {
+          "rekeningID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "betaalMethode": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "totaalBetaald": {
+            "type": "number",
+            "format": "double"
+          },
+          "reserveringID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reservering": {
+            "$ref": "#/components/schemas/Reservering"
+          },
+          "bestellingen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Bestelling"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Reservering": {
+        "type": "object",
+        "properties": {
+          "reserveringID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "boekingID": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "datumTijd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "aantalVolwassenen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aantalJongeKinderen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aantalOudereKinderen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tafelID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tafel": {
+            "$ref": "#/components/schemas/Tafel"
+          },
+          "rekening": {
+            "$ref": "#/components/schemas/Rekening"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReserveringInputDto": {
+        "type": "object",
+        "properties": {
+          "datumTijd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "aantalVolwassenen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aantalJongeKinderen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aantalOudereKinderen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tafelID": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Tafel": {
+        "type": "object",
+        "properties": {
+          "tafelID": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tafelnummer": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aantalPlaatsen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reserveringen": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reservering"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}
