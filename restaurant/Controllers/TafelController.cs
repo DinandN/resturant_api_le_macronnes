@@ -1,5 +1,4 @@
-﻿
-using LeMacronnesResturauntAPI.Data;
+﻿using LeMacronnesResturauntAPI.Data;
 using LeMacronnesResturauntAPI.DTOs;
 using LeMacronnesResturauntAPI.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -19,10 +18,33 @@ namespace LeMacronnesResturauntAPI.Controllers
         }
 
         // GET: api/Tafels
+        // Optioneel: ?aantalPlaatsen=4&beschikbaarOp=2026-01-15T18:00:00
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Tafel>>> GetTafels()
+        public async Task<ActionResult<IEnumerable<Tafel>>> GetTafels(
+            [FromQuery] int? aantalPlaatsen,
+            [FromQuery] DateTime? beschikbaarOp)
         {
-            return await _context.Tafels.ToListAsync();
+            var query = _context.Tafels.AsQueryable();
+
+            // Filter 1: Minimaal aantal plaatsen
+            if (aantalPlaatsen.HasValue)
+            {
+                query = query.Where(t => t.AantalPlaatsen >= aantalPlaatsen.Value);
+            }
+
+            // Filter 2: Beschikbaarheid op een datum/tijd
+            if (beschikbaarOp.HasValue)
+            {
+                // We zoeken tafels die GEEN reservering hebben op dit tijdstip (+/- 2 uur buffer)
+                // En we negeren geannuleerde reserveringen (!r.Cancelled)
+                query = query.Where(t => !t.Reserveringen.Any(r =>
+                    !r.Cancelled &&
+                    r.DatumTijd < beschikbaarOp.Value.AddHours(2) && // Reservering begint voor einde tijdslot
+                    r.DatumTijd > beschikbaarOp.Value.AddHours(-2)   // Reservering eindigt na start tijdslot
+                ));
+            }
+
+            return await query.ToListAsync();
         }
 
         // GET: api/Tafels/5
@@ -43,7 +65,7 @@ namespace LeMacronnesResturauntAPI.Controllers
             {
                 Tafelnummer = input.Tafelnummer,
                 AantalPlaatsen = input.AantalPlaatsen
-                // Reserveringen laten we leeg, want een nieuwe tafel heeft die nog niet
+                // Reserveringen laten we leeg
             };
 
             _context.Tafels.Add(tafel);
@@ -56,7 +78,6 @@ namespace LeMacronnesResturauntAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTafel(int id, TafelInputDto input)
         {
-            // Eerst de echte tafel ophalen uit de database
             var bestaandeTafel = await _context.Tafels.FindAsync(id);
 
             if (bestaandeTafel == null)
@@ -81,11 +102,13 @@ namespace LeMacronnesResturauntAPI.Controllers
         }
 
         // DELETE: api/Tafels/5
-        // We check if the table has reservations before deleting
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTafel(int id)
         {
-            var tafel = await _context.Tafels.Include(t => t.Reserveringen).FirstOrDefaultAsync(t => t.TafelID == id);
+            var tafel = await _context.Tafels
+                .Include(t => t.Reserveringen)
+                .FirstOrDefaultAsync(t => t.TafelID == id);
+
             if (tafel == null) return NotFound();
 
             // Prevent deleting a table if it has history

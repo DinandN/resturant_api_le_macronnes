@@ -1,6 +1,6 @@
 ﻿using LeMacronnesResturauntAPI.Data;
-using LeMacronnesResturauntAPI.Models;
 using LeMacronnesResturauntAPI.DTOs;
+using LeMacronnesResturauntAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,10 +18,34 @@ namespace LeMacronnesResturauntAPI.Controllers
         }
 
         // GET: api/Menu
+        // Optioneel zoeken: api/Menu?naam=bief&allergenen=gluten
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Gerecht>>> GetMenu()
+        public async Task<ActionResult<IEnumerable<Gerecht>>> GetMenu(
+            [FromQuery] int? id,
+            [FromQuery] string? naam,
+            [FromQuery] string? allergenen)
         {
-            return await _context.Gerechten.ToListAsync();
+            var query = _context.Gerechten.AsQueryable();
+
+            // Filter op ID als die is ingevuld
+            if (id.HasValue)
+            {
+                query = query.Where(g => g.GerechtID == id.Value);
+            }
+
+            // Filter op Naam als die is ingevuld
+            if (!string.IsNullOrEmpty(naam))
+            {
+                query = query.Where(g => g.Naam.Contains(naam));
+            }
+
+            // Filter op Allergenen als die is ingevuld
+            if (!string.IsNullOrEmpty(allergenen))
+            {
+                query = query.Where(g => g.Allergenen.Contains(allergenen));
+            }
+
+            return await query.ToListAsync();
         }
 
         // GET: api/Menu/5
@@ -39,11 +63,17 @@ namespace LeMacronnesResturauntAPI.Controllers
         }
 
         // POST: api/Menu
+        // Gebruikt DTO zodat ID niet handmatig ingevuld kan worden
         [HttpPost]
-        [HttpPost]
-        public async Task<ActionResult<Gerecht>> PostGerecht(Gerecht gerecht)
+        public async Task<ActionResult<Gerecht>> PostGerecht(GerechtInputDto input)
         {
-            gerecht.GerechtID = 0;
+            var gerecht = new Gerecht
+            {
+                Naam = input.Naam,
+                Omschrijving = input.Omschrijving,
+                Prijs = input.Prijs,
+                Allergenen = input.Allergenen
+            };
 
             _context.Gerechten.Add(gerecht);
             await _context.SaveChangesAsync();
@@ -55,13 +85,11 @@ namespace LeMacronnesResturauntAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutGerecht(int id, Gerecht gerecht)
         {
-            // Controleer of de ID in de URL overeenkomt met de ID in de body
             if (id != gerecht.GerechtID)
             {
-                return BadRequest("ID in URL komt niet overeen met ID in body.");
+                return BadRequest("ID in URL komt niet overeen met ID in de body.");
             }
 
-            // Markeer de entity als gewijzigd
             _context.Entry(gerecht).State = EntityState.Modified;
 
             try
@@ -99,7 +127,6 @@ namespace LeMacronnesResturauntAPI.Controllers
             return NoContent();
         }
 
-        // Hulpmethode om te checken of een gerecht bestaat
         private bool GerechtExists(int id)
         {
             return _context.Gerechten.Any(e => e.GerechtID == id);
