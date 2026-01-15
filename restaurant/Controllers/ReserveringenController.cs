@@ -70,5 +70,51 @@ namespace LeMacronnesResturauntAPI.Controllers
 
             return CreatedAtAction(nameof(GetReserveringen), new { id = reservering.ReserveringID }, reservering);
         }
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Reservering>> GetReservering(int id)
+        {
+            var reservering = await _context.Reserveringen
+                .Include(r => r.Tafel)
+                .Include(r => r.Rekening)
+                .FirstOrDefaultAsync(r => r.ReserveringID == id);
+
+            if (reservering == null) return NotFound();
+
+            return reservering;
+        }
+
+        // PUT: api/Reserveringen/5 (Update standard details)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutReservering(int id, ReserveringInputDto input)
+        {
+            var reservering = await _context.Reserveringen.FindAsync(id);
+            if (reservering == null) return NotFound();
+
+            // Update allowed fields
+            reservering.DatumTijd = input.DatumTijd;
+            reservering.AantalVolwassenen = input.AantalVolwassenen;
+            reservering.AantalJongeKinderen = input.AantalJongeKinderen;
+            reservering.AantalOudereKinderen = input.AantalOudereKinderen;
+            reservering.TafelID = input.TafelID;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // DELETE: api/Reserveringen/5
+        // IMPLEMENTATION: Soft Delete (Mark as Cancelled)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> CancelReservering(int id)
+        {
+            var reservering = await _context.Reserveringen.FindAsync(id);
+            if (reservering == null) return NotFound();
+
+            // Instead of .Remove, we change the status
+            reservering.Cancelled = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Reservering is geannuleerd (niet verwijderd)." });
+        }
     }
 }
