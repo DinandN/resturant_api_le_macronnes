@@ -18,7 +18,8 @@ namespace LeMacronnesResturauntAPI.Controllers
         }
 
         // GET: api/Menu
-        // Optioneel zoeken: api/Menu?naam=bief&allergenen=gluten
+        // Voorbeeld: api/Menu?id=1
+        // Voorbeeld: api/Menu?allergenen=Gluten,Pinda (Sluit gerechten met deze allergenen UIT)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Gerecht>>> GetMenu(
             [FromQuery] int? id,
@@ -27,43 +28,45 @@ namespace LeMacronnesResturauntAPI.Controllers
         {
             var query = _context.Gerechten.AsQueryable();
 
-            // Filter op ID als die is ingevuld
+            // 1. Filter op ID
             if (id.HasValue)
             {
                 query = query.Where(g => g.GerechtID == id.Value);
             }
 
-            // Filter op Naam als die is ingevuld
+            // 2. Filter op Naam
             if (!string.IsNullOrEmpty(naam))
             {
                 query = query.Where(g => g.Naam.Contains(naam));
             }
 
-            // Filter op Allergenen als die is ingevuld
+            // 3. Filter op Allergenen (Does Not Contain / Exclude List)
+            // Verwacht input als: "Gluten,Lactose"
             if (!string.IsNullOrEmpty(allergenen))
             {
-                query = query.Where(g => g.Allergenen.Contains(allergenen));
+                // Split de string in een lijst (bijv: ["Gluten", "Lactose"])
+                var teVermijdenAllergenen = allergenen.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var teVermijden in teVermijdenAllergenen)
+                {
+                    // Voor elk item in de lijst, voeg een filter toe dat zegt: 
+                    // Het gerecht mag dit allergeen NIET bevatten.
+                    query = query.Where(g => !g.Allergenen.Contains(teVermijden));
+                }
             }
 
-            return await query.ToListAsync();
-        }
+            var result = await query.ToListAsync();
 
-        // GET: api/Menu/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Gerecht>> GetGerecht(int id)
-        {
-            var gerecht = await _context.Gerechten.FindAsync(id);
-
-            if (gerecht == null)
+            // Als er op ID werd gezocht en niets gevonden, geef NotFound
+            if (id.HasValue && !result.Any())
             {
                 return NotFound();
             }
 
-            return gerecht;
+            return Ok(result);
         }
 
         // POST: api/Menu
-        // Gebruikt DTO zodat ID niet handmatig ingevuld kan worden
         [HttpPost]
         public async Task<ActionResult<Gerecht>> PostGerecht(GerechtInputDto input)
         {
@@ -78,7 +81,8 @@ namespace LeMacronnesResturauntAPI.Controllers
             _context.Gerechten.Add(gerecht);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetGerecht), new { id = gerecht.GerechtID }, gerecht);
+            // Omdat we geen aparte GetById meer hebben, verwijzen we naar de lijst filter
+            return CreatedAtAction(nameof(GetMenu), new { id = gerecht.GerechtID }, gerecht);
         }
 
         // PUT: api/Menu/5
@@ -98,14 +102,8 @@ namespace LeMacronnesResturauntAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!GerechtExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                if (!GerechtExists(id)) return NotFound();
+                else throw;
             }
 
             return NoContent();
@@ -116,10 +114,7 @@ namespace LeMacronnesResturauntAPI.Controllers
         public async Task<IActionResult> DeleteGerecht(int id)
         {
             var gerecht = await _context.Gerechten.FindAsync(id);
-            if (gerecht == null)
-            {
-                return NotFound();
-            }
+            if (gerecht == null) return NotFound();
 
             _context.Gerechten.Remove(gerecht);
             await _context.SaveChangesAsync();

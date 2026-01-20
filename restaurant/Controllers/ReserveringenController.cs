@@ -18,9 +18,10 @@ namespace LeMacronnesResturauntAPI.Controllers
         }
 
         // GET: api/Reserveringen
-        // Ondersteunt optionele filters: ?datum=2026-01-15&tafelId=3
+        // Ondersteunt: ?id=5 OF ?datum=...&tafelId=...
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetReserveringen(
+            [FromQuery] int? id,
             [FromQuery] DateTime? datum,
             [FromQuery] int? tafelId)
         {
@@ -29,13 +30,19 @@ namespace LeMacronnesResturauntAPI.Controllers
                 .Include(r => r.Rekening)
                 .AsQueryable();
 
-            // Filter op TafelID als die is ingevuld
+            // 1. Filter op ID
+            if (id.HasValue)
+            {
+                query = query.Where(r => r.ReserveringID == id.Value);
+            }
+
+            // 2. Filter op TafelID
             if (tafelId.HasValue)
             {
                 query = query.Where(r => r.TafelID == tafelId.Value);
             }
 
-            // Filter op Datum (alleen de dag, tijd negeren we voor de match)
+            // 3. Filter op Datum
             if (datum.HasValue)
             {
                 query = query.Where(r => r.DatumTijd.Date == datum.Value.Date);
@@ -53,24 +60,12 @@ namespace LeMacronnesResturauntAPI.Controllers
             })
             .ToListAsync();
 
-            return Ok(result);
-        }
-
-        // GET: api/Reserveringen/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Reservering>> GetReservering(int id)
-        {
-            var reservering = await _context.Reserveringen
-                .Include(r => r.Tafel)
-                .Include(r => r.Rekening)
-                .FirstOrDefaultAsync(r => r.ReserveringID == id);
-
-            if (reservering == null)
+            if (id.HasValue && !result.Any())
             {
                 return NotFound();
             }
 
-            return reservering;
+            return Ok(result);
         }
 
         [HttpPost]
@@ -88,9 +83,8 @@ namespace LeMacronnesResturauntAPI.Controllers
 
             if (heeftOverlap)
             {
-                return BadRequest("Deze tafel is niet beschikbaar op dit tijdstip. Er moet minimaal 2 uur tussen reserveringen zitten.");
+                return BadRequest("Deze tafel is niet beschikbaar op dit tijdstip.");
             }
-
 
             var reservering = new Reservering
             {
@@ -116,18 +110,15 @@ namespace LeMacronnesResturauntAPI.Controllers
             _context.Rekeningen.Add(rekening);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetReservering), new { id = reservering.ReserveringID }, reservering);
+            return CreatedAtAction(nameof(GetReserveringen), new { id = reservering.ReserveringID }, reservering);
         }
 
-        // PUT: api/Reserveringen/5
+        // PUT en DELETE blijven hetzelfde (hieronder ingekort voor overzicht, maar functioneel ongewijzigd)
         [HttpPut("{id}")]
         public async Task<IActionResult> PutReservering(int id, ReserveringInputDto input)
         {
             var reservering = await _context.Reserveringen.FindAsync(id);
-            if (reservering == null)
-            {
-                return NotFound();
-            }
+            if (reservering == null) return NotFound();
 
             reservering.DatumTijd = input.DatumTijd;
             reservering.AantalVolwassenen = input.AantalVolwassenen;
@@ -135,34 +126,19 @@ namespace LeMacronnesResturauntAPI.Controllers
             reservering.AantalOudereKinderen = input.AantalOudereKinderen;
             reservering.TafelID = input.TafelID;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                throw;
-            }
-
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
-        // DELETE: api/Reserveringen/5
-        // Dit is een SOFT DELETE (Annuleren)
         [HttpDelete("{id}")]
         public async Task<IActionResult> CancelReservering(int id)
         {
             var reservering = await _context.Reserveringen.FindAsync(id);
-            if (reservering == null)
-            {
-                return NotFound();
-            }
+            if (reservering == null) return NotFound();
 
-            // We verwijderen hem niet echt, maar zetten hem op cancelled
             reservering.Cancelled = true;
             await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Reservering geannuleerd (Soft Delete)." });
+            return Ok(new { message = "Reservering geannuleerd." });
         }
     }
 }
