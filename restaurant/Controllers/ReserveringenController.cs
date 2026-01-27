@@ -88,7 +88,7 @@ namespace LeMacronnesResturauntAPI.Controllers
 
             var reservering = new Reservering
             {
-                ReserveringID = input.BoekingID,
+                BoekingID = input.BoekingID,
                 DatumTijd = input.DatumTijd,
                 AantalVolwassenen = input.AantalVolwassenen,
                 AantalJongeKinderen = input.AantalJongeKinderen,
