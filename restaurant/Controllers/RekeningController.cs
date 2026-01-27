@@ -1,6 +1,5 @@
 ﻿using LeMacronnesResturauntAPI.Data;
-using LeMacronnesResturauntAPI.DTOs; // Vergeet deze niet
-using LeMacronnesResturauntAPI.Models;
+using LeMacronnesResturauntAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,22 +18,64 @@ namespace LeMacronnesResturauntAPI.Controllers
 
         // GET: api/Rekeningen
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetRekeningen()
+        public async Task<ActionResult<IEnumerable<RekeningOutputDto>>> GetRekening(
+            [FromQuery] int? rekeningId,
+            [FromQuery] int? tafelId,
+            [FromQuery] int? boekingId)
         {
-            var rekeningen = await _context.Rekeningen
+            var query = _context.Rekeningen
+                .Include(r => r.Reservering)
                 .Include(r => r.Bestellingen)
                     .ThenInclude(b => b.BestelRegels)
                         .ThenInclude(br => br.Gerecht)
-                .Select(r => new
-                {
-                    r.RekeningID,
-                    r.Status,
-                    r.BetaalMethode,
-                    ReedsBetaald = r.TotaalBetaald,
-                    // Live berekening van wat het totaal zou moeten zijn
-                    TotaalBedrag = r.Bestellingen.SelectMany(b => b.BestelRegels).Sum(br => br.Aantal * br.Gerecht.Prijs)
-                })
-                .ToListAsync();
+                .AsQueryable();
+
+            if (rekeningId.HasValue)
+            {
+                query = query.Where(r => r.RekeningID == rekeningId);
+            }
+            else if (tafelId.HasValue)
+            {
+                // We ensure Reservering is not null to prevent matching orphaned bills
+                query = query.Where(r => r.Reservering != null && r.Reservering.TafelID == tafelId && r.Status == "Open");
+            }
+            else if (boekingId.HasValue)
+            {
+                query = query.Where(r => r.Reservering != null && r.Reservering.BoekingID == boekingId);
+            }
+            else
+            {
+                return BadRequest("Geef een rekeningId, tafelId of boekingId mee.");
+            }
+
+            // The Select fails if we try to read a NULL into an int. 
+            var rekeningen = await query.Select(r => new RekeningOutputDto
+            {
+                RekeningID = r.RekeningID,
+                Status = r.Status ?? "Onbekend", 
+                TotaalBetaald = r.TotaalBetaald,
+
+                // This handles cases where the 'Reservering' record is missing (Broken FK).
+                TafelID = (int?)r.Reservering.TafelID ?? 0,
+                BoekingID = (int?)r.Reservering.BoekingID ?? 0,
+
+                Items = r.Bestellingen
+                    .SelectMany(b => b.BestelRegels)
+                    .Select(br => new RekeningItemDto
+                    {
+                        // Handle if Gerecht has been deleted
+                        GerechtNaam = br.Gerecht != null ? br.Gerecht.Naam : "Verwijderd Gerecht",
+                        Aantal = (int?)br.Aantal ?? 0,
+
+                        // Handle if Gerecht or Price is missing
+                        PrijsPerStuk = br.Gerecht != null ? br.Gerecht.Prijs : 0
+                    }).ToList()
+            }).ToListAsync();
+
+            if (!rekeningen.Any())
+            {
+                return NotFound("Geen rekening gevonden.");
+            }
 
             return Ok(rekeningen);
         }
@@ -50,40 +91,32 @@ namespace LeMacronnesResturauntAPI.Controllers
 
             if (rekening == null) return NotFound();
 
-            // 1. Calculate the total cost first
             decimal totaalTeBetalen = rekening.Bestellingen
                 .SelectMany(b => b.BestelRegels)
-                .Sum(br => br.Aantal * br.Gerecht.Prijs);
+                .Sum(br => br.Aantal * (br.Gerecht != null ? br.Gerecht.Prijs : 0));
 
-            // 2. CHECK: Is the input negative? (Sanity check)
             if (input.TotaalBetaald < 0)
             {
                 return BadRequest("Het betaalde bedrag mag niet negatief zijn.");
             }
 
-            // 3. CHECK: Is the payment less than the total cost?
-            // "Make sure the amount doesn't go into the minus" logic
             if (input.TotaalBetaald < totaalTeBetalen)
             {
                 return BadRequest(new
                 {
                     Message = "Betaling mislukt: Het bedrag is lager dan de rekening.",
                     HuidigBetaald = input.TotaalBetaald,
-                    TotaalVereist = totaalTeBetalen, // <--- Here is the total they need to pay
+                    TotaalVereist = totaalTeBetalen,
                     NogTeBetalen = totaalTeBetalen - input.TotaalBetaald
                 });
             }
 
-            // 4. Update the data (Only happens if checks pass)
             rekening.TotaalBetaald = input.TotaalBetaald;
             rekening.BetaalMethode = input.BetaalMethode;
-
-            // Since we checked above, we know it is fully paid
             rekening.Status = "Betaald";
 
             await _context.SaveChangesAsync();
 
-            // 5. Return success (optionally return change/tip info)
             return Ok(new
             {
                 Message = "Betaling succesvol verwerkt",

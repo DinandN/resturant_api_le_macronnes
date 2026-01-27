@@ -88,6 +88,7 @@ namespace LeMacronnesResturauntAPI.Controllers
 
             var reservering = new Reservering
             {
+                ReserveringID = input.BoekingID,
                 DatumTijd = input.DatumTijd,
                 AantalVolwassenen = input.AantalVolwassenen,
                 AantalJongeKinderen = input.AantalJongeKinderen,
@@ -120,6 +121,7 @@ namespace LeMacronnesResturauntAPI.Controllers
             var reservering = await _context.Reserveringen.FindAsync(id);
             if (reservering == null) return NotFound();
 
+            reservering.BoekingID = input.BoekingID;
             reservering.DatumTijd = input.DatumTijd;
             reservering.AantalVolwassenen = input.AantalVolwassenen;
             reservering.AantalJongeKinderen = input.AantalJongeKinderen;
