@@ -5,8 +5,6 @@
         public int RekeningID { get; set; }
         public string Status { get; set; } = string.Empty;
         public decimal TotaalBetaald { get; set; }
-
-        // Kept as int (Strict) per your request
         public int TafelID { get; set; }
         public int BoekingID { get; set; }
 
